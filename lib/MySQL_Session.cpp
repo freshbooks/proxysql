@@ -2566,47 +2566,15 @@ void MySQL_Session::handler___status_CONNECTING_CLIENT___STATE_SERVER_HANDSHAKE(
 				//client_myds->myconn->userinfo->set_schemaname(mysql_thread___default_schema,strlen(mysql_thread___default_schema));
 				client_myds->myconn->userinfo->set_schemaname(default_schema,strlen(default_schema));
 			}
-			int free_users=0;
 			int used_users=0;
 			if (admin==false) {
 				client_authenticated=true;
-				free_users=GloMyAuth->increase_frontend_user_connections(client_myds->myconn->userinfo->username, &used_users);
 			}
-			if (max_connections_reached==true || free_users<0) {
-				*wrong_pass=true;
-				client_myds->setDSS_STATE_QUERY_SENT_NET();
-				if (max_connections_reached==true) {
-					proxy_debug(PROXY_DEBUG_MYSQL_CONNECTION, 5, "Too many connections\n");
-					client_myds->myprot.generate_pkt_ERR(true,NULL,NULL,2,1040,(char *)"08004", (char *)"Too many connections");
-				} else { // see issue #794
-					proxy_debug(PROXY_DEBUG_MYSQL_CONNECTION, 5, "User '%s' has exceeded the 'max_user_connections' resource (current value: %d)\n", client_myds->myconn->userinfo->username, used_users);
-					char *a=(char *)"User '%s' has exceeded the 'max_user_connections' resource (current value: %d)";
-					char *b=(char *)malloc(strlen(a)+strlen(client_myds->myconn->userinfo->username)+16);
-					sprintf(b,a,client_myds->myconn->userinfo->username,used_users);
-					client_myds->myprot.generate_pkt_ERR(true,NULL,NULL,2,1226,(char *)"42000", b);
-					free(b);
-				}
-				__sync_add_and_fetch(&MyHGM->status.client_connections_aborted,1);
-				client_myds->DSS=STATE_SLEEP;
-			} else {
-				client_myds->myprot.generate_pkt_OK(true,NULL,NULL,2,0,0,0,0,NULL);
+
+			client_myds->myprot.generate_pkt_OK(true,NULL,NULL,2,0,0,0,0,NULL);
 			//server_myds->myconn->userinfo->set(client_myds->myconn->userinfo);
-				status=WAITING_CLIENT_DATA;
-				client_myds->DSS=STATE_CLIENT_AUTH_OK;
-			//MySQL_Connection *myconn=client_myds->myconn;
-/*
-			// enable compression
-			if (myconn->options.server_capabilities & CLIENT_COMPRESS) {
-				if (myconn->options.compression_min_length) {
-					myconn->set_status_compression(true);
-				}
-			} else {
-				//explicitly disable compression
-				myconn->options.compression_min_length=0;
-				myconn->set_status_compression(false);
-			}
-*/
-			}
+			status=WAITING_CLIENT_DATA;
+			client_myds->DSS=STATE_CLIENT_AUTH_OK;
 		} else {
 			// use SSL
 			client_myds->DSS=STATE_SSL_INIT;

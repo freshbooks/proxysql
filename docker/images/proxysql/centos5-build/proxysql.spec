@@ -6,6 +6,7 @@
 %define        __os_install_post %{_dbpath}/brp-compress
 %define 	   _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.el5.%%{ARCH}.rpm
 %define          release 1.el5
+%define          dist el5
 
 Summary: A high-performance MySQL proxy
 Name: proxysql

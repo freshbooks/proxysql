@@ -5,6 +5,7 @@
 %define          debug_package %{nil}
 %define        __os_install_post %{_dbpath}/brp-compress
 %define          release 1.el7
+%define          dist el7
 
 Summary: A high-performance MySQL proxy
 Name: proxysql

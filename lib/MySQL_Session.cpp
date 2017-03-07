@@ -2617,32 +2617,10 @@ void MySQL_Session::handler___status_CONNECTING_CLIENT___STATE_SERVER_HANDSHAKE(
 			} else {
 				free_users=1;
 			}
-			if (max_connections_reached==true || free_users<=0) {
-				proxy_debug(PROXY_DEBUG_MYSQL_CONNECTION, 5, "Too many connections\n");
-				*wrong_pass=true;
-				client_myds->setDSS_STATE_QUERY_SENT_NET();
-				client_myds->myprot.generate_pkt_ERR(true,NULL,NULL,2,1040,(char *)"#HY000", (char *)"Too many connections");
-				__sync_add_and_fetch(&MyHGM->status.client_connections_aborted,1);
-				client_myds->DSS=STATE_SLEEP;
-			} else {
-				client_myds->myprot.generate_pkt_OK(true,NULL,NULL,2,0,0,0,0,NULL);
-			//server_myds->myconn->userinfo->set(client_myds->myconn->userinfo);
-				status=WAITING_CLIENT_DATA;
-				client_myds->DSS=STATE_CLIENT_AUTH_OK;
-			//MySQL_Connection *myconn=client_myds->myconn;
-/*
-			// enable compression
-			if (myconn->options.server_capabilities & CLIENT_COMPRESS) {
-				if (myconn->options.compression_min_length) {
-					myconn->set_status_compression(true);
-				}
-			} else {
-				//explicitly disable compression
-				myconn->options.compression_min_length=0;
-				myconn->set_status_compression(false);
-			}
-*/
-			}
+
+			client_myds->myprot.generate_pkt_OK(true,NULL,NULL,2,0,0,0,0,NULL);
+			status=WAITING_CLIENT_DATA;
+			client_myds->DSS=STATE_CLIENT_AUTH_OK;
 		} else {
 			// use SSL
 			client_myds->DSS=STATE_SSL_INIT;

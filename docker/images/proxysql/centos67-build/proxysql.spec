@@ -5,11 +5,12 @@
 %define          debug_package %{nil}
 %define        __os_install_post %{_dbpath}/brp-compress
 %define 	   _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.el6.%%{ARCH}.rpm
+%define          release 1.el6
 
 Summary: A high-performance MySQL proxy
 Name: proxysql
 Version: %{version}
-Release: 1
+Release: %{release}
 License: GPL+
 Group: Development/Tools
 SOURCE0 : %{name}-%{version}.tar.gz

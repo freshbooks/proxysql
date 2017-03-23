@@ -27,27 +27,27 @@ debug: build_deps_debug build_lib_debug build_src_debug
 
 .PHONY: build_deps
 build_deps:
-	cd deps && OPTZ="${O2}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd deps && OPTZ="${O2}" DEBUG="" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_lib
 build_lib: build_deps
-	cd lib && OPTZ="${O2}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd lib && OPTZ="${O2}" DEBUG="" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_src
 build_src: build_deps build_lib
-	cd src && OPTZ="${O2}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd src && OPTZ="${O2}" DEBUG="" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_deps_debug
 build_deps_debug:
-	cd deps && OPTZ="${O0} ${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd deps && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_lib_debug
 build_lib_debug: build_deps_debug
-	cd lib && OPTZ="${O0} ${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd lib && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_src_debug
 build_src_debug: build_deps build_lib_debug
-	cd src && OPTZ="${O0} ${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
+	cd src && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: clean
 clean:

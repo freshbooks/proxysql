@@ -11,6 +11,7 @@
 #define STATUS_MYSQL_CONNECTION_LOCK_TABLES          0x00000010
 #define STATUS_MYSQL_CONNECTION_TEMPORARY_TABLE      0x00000020
 #define STATUS_MYSQL_CONNECTION_GET_LOCK             0x00000040
+#define STATUS_MYSQL_CONNECTION_SQL_LOG_BIN0         0x00000100
 
 class MySQL_Connection_userinfo {
 	private:
@@ -37,6 +38,10 @@ class MySQL_Connection {
 	public:
 	struct {
 		char *server_version;
+		char *sql_mode;
+		char *time_zone;
+		uint32_t sql_mode_int;
+		uint32_t time_zone_int;
 		uint32_t max_allowed_pkt;
 		uint32_t server_capabilities;
 		unsigned int compression_min_length;
@@ -45,6 +50,7 @@ class MySQL_Connection {
 		uint8_t protocol_version;
 		uint8_t charset;
 		int8_t last_set_autocommit;
+		uint8_t sql_log_bin;
 		bool autocommit;
 	} options;
 	struct {
@@ -92,6 +98,7 @@ class MySQL_Connection {
 	bool set_autocommit(bool);
 	uint8_t set_charset(uint8_t);
 
+	void set_status_sql_log_bin0(bool);
 	void set_status_transaction(bool);
 	void set_status_compression(bool);
 	void set_status_get_lock(bool);
@@ -106,6 +113,7 @@ class MySQL_Connection {
 	bool get_status_temporary_table();
 	bool get_status_prepared_statement();
 	bool get_status_user_variable();
+	bool get_status_sql_log_bin0();
 	void connect_start();
 	void connect_cont(short event);
 	void change_user_start();

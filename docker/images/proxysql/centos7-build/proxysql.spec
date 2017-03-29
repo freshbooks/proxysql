@@ -4,11 +4,13 @@
 %define        __spec_install_post %{nil}
 %define          debug_package %{nil}
 %define        __os_install_post %{_dbpath}/brp-compress
+%define          release 1.el7
+%define          dist el7
 
 Summary: A high-performance MySQL proxy
 Name: proxysql
-Version: 1.3.5
-Release: 1
+Version: %{version}
+Release: %{release}
 License: GPL+
 Group: Development/Tools
 SOURCE0 : %{name}-%{version}.tar.gz

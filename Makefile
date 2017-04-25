@@ -10,7 +10,7 @@ DEBUG=${ALL_DEBUG}
 #export DEBUG
 #export OPTZ
 #export EXTRALINK
-CURVER=1.3.6
+CURVER?=1.3.4
 MAKEOPT="-j 8"
 DISTRO := $(shell gawk -F= '/^NAME/{print $$2}' /etc/os-release)
 ifeq ($(wildcard /usr/lib/systemd/system), /usr/lib/systemd/system)
@@ -27,36 +27,41 @@ debug: build_deps_debug build_lib_debug build_src_debug
 
 .PHONY: build_deps
 build_deps:
-	cd deps && OPTZ="${O2} -ggdb" CC=${CC} CXX=${CXX} ${MAKE}
+	cd deps && OPTZ="${O2}" DEBUG="-ggdb" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_lib
 build_lib: build_deps
-	cd lib && OPTZ="${O2} -ggdb" CC=${CC} CXX=${CXX} ${MAKE}
+	cd lib && OPTZ="${O2}" DEBUG="-ggdb" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_src
 build_src: build_deps build_lib
-	cd src && OPTZ="${O2} -ggdb" CC=${CC} CXX=${CXX} ${MAKE}
+	cd src && OPTZ="${O2}" DEBUG="-ggdb" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_deps_debug
 build_deps_debug:
-	cd deps && OPTZ="${O0} -ggdb -DDEBUG" CC=${CC} CXX=${CXX} ${MAKE}
+	cd deps && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_lib_debug
 build_lib_debug: build_deps_debug
-	cd lib && OPTZ="${O0} -ggdb -DDEBUG" CC=${CC} CXX=${CXX} ${MAKE}
+	cd lib && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: build_src_debug
 build_src_debug: build_deps build_lib_debug
-	cd src && OPTZ="${O0} -ggdb -DDEBUG" CC=${CC} CXX=${CXX} ${MAKE}
+	cd src && OPTZ="${O0}" DEBUG="${ALL_DEBUG}" CC=${CC} CXX=${CXX} ${MAKE}
 
 .PHONY: clean
 clean:
 	cd lib && ${MAKE} clean
 	cd src && ${MAKE} clean
 
-packages: centos6.7 centos7 centos6.7-dbg centos7-dbg ubuntu12 ubuntu14 debian7 debian8 ubuntu12-dbg ubuntu14-dbg debian7-dbg debian8-dbg ubuntu16 ubuntu16-dbg fedora24 fedora24-dbg
+packages: centos6.7 centos7 centos6.7-dbg centos7-dbg centos5 centos5-dbg ubuntu12 ubuntu14 debian7 debian8 ubuntu12-dbg ubuntu14-dbg debian7-dbg debian8-dbg ubuntu16 ubuntu16-dbg fedora24 fedora24-dbg
 .PHONY: packages
 
+centos5: binaries/proxysql-${CURVER}-1-centos5.x86_64.rpm
+.PHONY: centos5
+
+centos5-dbg: binaries/proxysql-${CURVER}-1-centos5.x86_64.rpm
+.PHONY: centos5-dbg
 
 centos6.7: binaries/proxysql-${CURVER}-1-centos67.x86_64.rpm
 .PHONY: centos6.7
@@ -107,6 +112,48 @@ debian8-dbg: binaries/proxysql_${CURVER}-dbg-debian8_amd64.deb
 .PHONY: debian8-dbg
 
 
+binaries/proxysql-${CURVER}-1-centos5.x86_64.rpm:
+	docker stop centos5_build || true
+	docker rm centos5_build || true
+	docker create --name centos5_build renecannao/proxysql:build-centos5 bash -c "while : ; do sleep 10 ; done"
+	docker start centos5_build
+	docker exec centos5_build bash -c "cd /opt; git clone -b v${CURVER} https://github.com/sysown/proxysql.git proxysql"
+	docker exec centos5_build bash -c "cd /opt/proxysql; ${MAKE} clean && ${MAKE} ${MAKEOPT} build_deps && ${MAKE} ${MAKEOPT}"
+	docker exec -it centos5_build bash -c "cd /opt/proxysql ; mkdir -p proxysql/usr/bin; mkdir -p proxysql/etc; cp src/proxysql proxysql/usr/bin/; cp -a etc proxysql ; mkdir -p proxysql/usr/share/proxysql/tools ; cp -a tools/proxysql_galera_checker.sh tools/proxysql_galera_writer.pl proxysql/usr/share/proxysql/tools ; mv proxysql proxysql-${CURVER} ; tar czvf proxysql-${CURVER}.tar.gz proxysql-${CURVER}"
+	docker exec -it centos5_build bash -c "mkdir -p /root/rpmbuild/{RPMS,SRPMS,BUILD,SOURCES,SPECS,tmp}"
+	docker cp docker/images/proxysql/centos5-build/rpmmacros centos5_build:/root/.rpmmacros
+	docker cp docker/images/proxysql/centos5-build/proxysql.spec centos5_build:/root/rpmbuild/SPECS/proxysql.spec
+	sleep 2
+	docker exec -it centos5_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
+	docker exec -it centos5_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
+	sleep 2
+	docker exec -it centos5_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
+	sleep 2
+	docker cp centos5_build:/root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm ./binaries/proxysql-${CURVER}-1-centos5.x86_64.rpm
+	docker stop centos5_build
+	docker rm centos5_build
+
+binaries/proxysql-${CURVER}-1-dbg-centos5.x86_64.rpm:
+	docker stop centos5_build || true
+	docker rm centos5_build || true
+	docker create --name centos5_build renecannao/proxysql:build-centos5 bash -c "while : ; do sleep 10 ; done"
+	docker start centos5_build
+	docker exec centos5_build bash -c "cd /opt; git clone -b v${CURVER} https://github.com/sysown/proxysql.git proxysql"
+	docker exec centos5_build bash -c "cd /opt/proxysql; ${MAKE} clean && ${MAKE} ${MAKEOPT} build_deps && ${MAKE} ${MAKEOPT} debug"
+	docker exec -it centos5_build bash -c "cd /opt/proxysql ; mkdir -p proxysql/usr/bin; mkdir -p proxysql/etc; cp src/proxysql proxysql/usr/bin/; cp -a etc proxysql ; mkdir -p proxysql/usr/share/proxysql/tools ; cp -a tools/proxysql_galera_checker.sh tools/proxysql_galera_writer.pl proxysql/usr/share/proxysql/tools ; mv proxysql proxysql-${CURVER} ; tar czvf proxysql-${CURVER}.tar.gz proxysql-${CURVER}"
+	docker exec -it centos5_build bash -c "mkdir -p /root/rpmbuild/{RPMS,SRPMS,BUILD,SOURCES,SPECS,tmp}"
+	docker cp docker/images/proxysql/centos5-build/rpmmacros centos5_build:/root/.rpmmacros
+	docker cp docker/images/proxysql/centos5-build/proxysql.spec centos5_build:/root/rpmbuild/SPECS/proxysql.spec
+	sleep 2
+	docker exec -it centos5_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
+	docker exec -it centos5_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
+	sleep 2
+	docker exec -it centos5_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
+	sleep 2
+	docker cp centos5_build:/root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm ./binaries/proxysql-${CURVER}-1-dbg-centos5.x86_64.rpm
+	docker stop centos5_build
+	docker rm centos5_build
+
 binaries/proxysql-${CURVER}-1-centos67.x86_64.rpm:
 	docker stop centos67_build || true
 	docker rm centos67_build || true
@@ -120,7 +167,7 @@ binaries/proxysql-${CURVER}-1-centos67.x86_64.rpm:
 	docker cp docker/images/proxysql/centos67-build/proxysql.spec centos67_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it centos67_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it centos67_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it centos67_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it centos67_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2
@@ -141,7 +188,7 @@ binaries/proxysql-${CURVER}-1-dbg-centos67.x86_64.rpm:
 	docker cp docker/images/proxysql/centos67-build/proxysql.spec centos67_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it centos67_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it centos67_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it centos67_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it centos67_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2
@@ -162,7 +209,7 @@ binaries/proxysql-${CURVER}-1-centos7.x86_64.rpm:
 	docker cp docker/images/proxysql/centos7-build/proxysql.spec centos7_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it centos7_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it centos7_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it centos7_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it centos7_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2
@@ -183,7 +230,7 @@ binaries/proxysql-${CURVER}-1-dbg-centos7.x86_64.rpm:
 	docker cp docker/images/proxysql/centos7-build/proxysql.spec centos7_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it centos7_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it centos7_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it centos7_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it centos7_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2
@@ -205,7 +252,7 @@ binaries/proxysql-${CURVER}-1-fedora24.x86_64.rpm:
 	docker cp docker/images/proxysql/fedora24-build/proxysql.spec fedora24_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it fedora24_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it fedora24_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it fedora24_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it fedora24_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2
@@ -226,7 +273,7 @@ binaries/proxysql-${CURVER}-1-dbg-fedora24.x86_64.rpm:
 	docker cp docker/images/proxysql/fedora24-build/proxysql.spec fedora24_build:/root/rpmbuild/SPECS/proxysql.spec
 	sleep 2
 	docker exec -it fedora24_build bash -c "cp /opt/proxysql/proxysql-${CURVER}.tar.gz /root/rpmbuild/SOURCES"
-	docker exec -it fedora24_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec"
+	docker exec -it fedora24_build bash -c "cd /root/rpmbuild; rpmbuild -ba SPECS/proxysql.spec --define \"version ${CURVER}\""
 	sleep 2
 	docker exec -it fedora24_build bash -c "cp /root/rpmbuild/RPMS/x86_64/proxysql-${CURVER}-1.x86_64.rpm /root/rpm"
 	sleep 2

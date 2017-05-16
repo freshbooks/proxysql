@@ -144,8 +144,12 @@ bool MySQL_Connection_userinfo::set_schemaname(char *_new, int l) {
 			schemaname[k]=0;
 		}
 		compute_hash();
+
+		free(new_schemaname);
 		return true;
 	}
+
+	free(new_schemaname);
 	return false;
 }
 

@@ -120,17 +120,22 @@ void MySQL_Connection_userinfo::set(MySQL_Connection_userinfo *ui) {
 
 bool MySQL_Connection_userinfo::set_schemaname(char *_new, int l) {
 	int _l=0;
+	char *new_schemaname=(char *)malloc(l+1);
+	memcpy(new_schemaname,_new,l);
+	new_schemaname[l]=0;
+
 	if (schemaname) {
 		_l=strlen(schemaname); // bug fix for #609
 	}
-	if ((schemaname==NULL) || (strncmp(_new,schemaname, (l > _l ? l : _l) ))) {
+
+	if ((schemaname==NULL) || (strncmp(new_schemaname,schemaname, (l > _l ? l : _l) ))) {
 		if (schemaname) {
 			free(schemaname);
 			schemaname=NULL;
 		}
 		if (l) {
 			schemaname=(char *)malloc(l+1);
-			memcpy(schemaname,_new,l);
+			memcpy(schemaname,new_schemaname,l);
 			schemaname[l]=0;
 		} else {
 			int k=strlen(mysql_thread___default_schema);

@@ -9,8 +9,10 @@ SQLite3DB::SQLite3DB() {
 	url=NULL;
 	assert_on_error=0;
 #ifdef PROXYSQL_SQLITE3DB_PTHREAD_MUTEX
+	proxy_info("SQLite3DB pthread mutex\n");
 	pthread_rwlock_init(&rwlock, NULL);
 #else
+	proxy_info("SQLite3DB spinlock mutex\n");
 	spinlock_rwlock_init(&rwlock);
 #endif
 }
@@ -22,10 +24,14 @@ SQLite3DB::~SQLite3DB() {
 		rc=sqlite3_close_v2(db);
 		if (rc!=SQLITE_OK) {
 	    proxy_debug(PROXY_DEBUG_SQLITE, 1, "SQLITE: Error on sqlite3_close_v2(): %s\n", sqlite3_errmsg(db));	
+	    proxy_info("SQLITE: Error on sqlite3_close_v2(): %s\n", sqlite3_errmsg(db));
 			if (assert_on_error) {
 				assert(rc==0);
 			}
 		}
+	}
+	else {
+	    proxy_info("SQLITE: db not defined");
 	}
 	if (url) {free(url); url=NULL;}
 }
@@ -37,6 +43,8 @@ int SQLite3DB::open(char *__url, int flags) {
 	url=strdup(__url);
 	int rc;
 	rc=sqlite3_open_v2(url, &db, flags , NULL);
+    proxy_info("SQLITE: open return code %d", rc);
+
 	if(rc){
     proxy_debug(PROXY_DEBUG_SQLITE, 1, "SQLITE: Error on sqlite3_open_v2(): %s\n", sqlite3_errmsg(db));
 		if (assert_on_error) {
@@ -58,6 +66,7 @@ bool SQLite3DB::execute(const char *str) {
 		if(err!=NULL) {
 			if (rc!=SQLITE_LOCKED) {
 				proxy_error("SQLITE error: %s --- %s\n", err, str);
+			    proxy_info("SQLITE error: %s --- %s\n", err, str);
 				if (assert_on_error) {
 					assert(err==0);
 				}
@@ -66,6 +75,7 @@ bool SQLite3DB::execute(const char *str) {
 			err=NULL;
 		}
 		if (rc==SQLITE_LOCKED) { // the execution of sqlite3_exec() failed because locked
+		    proxy_info("SQLITE: locked, sleeping\n");
 			usleep(USLEEP_SQLITE_LOCKED);
 		}
 	} while (rc==SQLITE_LOCKED);

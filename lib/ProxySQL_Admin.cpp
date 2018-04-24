@@ -3242,6 +3242,8 @@ bool ProxySQL_Admin::init() {
 	tables_defs_stats=new std::vector<table_def_t *>;
 	tables_defs_config=new std::vector<table_def_t *>;
 
+	std::cerr << "Admin FreshBooks debugging: variable definition completed";
+
 	insert_into_tables_defs(tables_defs_admin,"mysql_servers", ADMIN_SQLITE_TABLE_MYSQL_SERVERS);
 	insert_into_tables_defs(tables_defs_admin,"runtime_mysql_servers", ADMIN_SQLITE_TABLE_RUNTIME_MYSQL_SERVERS);
 	insert_into_tables_defs(tables_defs_admin,"mysql_users", ADMIN_SQLITE_TABLE_MYSQL_USERS);
@@ -3311,19 +3313,26 @@ bool ProxySQL_Admin::init() {
 
 	// upgrade mysql_servers if needed (upgrade from previous version)
 	disk_upgrade_mysql_servers();
+	std::cerr << "Admin FreshBooks debugging: disk_upgrade_mysql_servers completed";
 
 	// upgrade mysql_users if needed (upgrade from previous version)
 	disk_upgrade_mysql_users();
+	std::cerr << "Admin FreshBooks debugging: disk_upgrade_mysql_users completed";
 
 	// upgrade mysql_query_rules if needed (upgrade from previous version)
 	disk_upgrade_mysql_query_rules();
+	std::cerr << "Admin FreshBooks debugging: disk_upgrade_mysql_query_rules completed";
 
 	// upgrade scheduler if needed (upgrade from previous version)
 	disk_upgrade_scheduler();
+	std::cerr << "Admin FreshBooks debugging: disk_upgrade_scheduler completed";
 
 	check_and_build_standard_tables(admindb, tables_defs_admin);
+	std::cerr << "Admin FreshBooks debugging: admindb completed";
 	check_and_build_standard_tables(configdb, tables_defs_config);
+	std::cerr << "Admin FreshBooks debugging: configdb completed";
 	check_and_build_standard_tables(statsdb, tables_defs_stats);
+	std::cerr << "Admin FreshBooks debugging: statsdb completed";
 
 	__attach_db(admindb, configdb, (char *)"disk");
 	__attach_db(admindb, statsdb, (char *)"stats");
@@ -3331,14 +3340,17 @@ bool ProxySQL_Admin::init() {
 	__attach_db(statsdb, monitordb, (char *)"monitor");
 
 	dump_mysql_collations();
+	std::cerr << "Admin FreshBooks debugging: dump_mysql_collations completed";
 
 #ifdef DEBUG
 	admindb->execute("ATTACH DATABASE 'file:mem_mydb?mode=memory&cache=shared' AS myhgm");
+	std::cerr << "Admin FreshBooks debugging: admindb->execute completed";
 #endif /* DEBUG */
 
 #ifdef DEBUG
 	flush_debug_levels_runtime_to_database(configdb, false);
 	flush_debug_levels_runtime_to_database(admindb, true);
+	std::cerr << "Admin FreshBooks debugging: flush_debug_levels_runtime_to_database completed";
 #endif /* DEBUG */
 
 	flush_mysql_variables___runtime_to_database(configdb, false, false, false);
@@ -3353,6 +3365,7 @@ bool ProxySQL_Admin::init() {
 
 	// workaround for issue #708
 	statsdb->execute("INSERT OR IGNORE INTO global_variables VALUES('mysql-max_allowed_packet',4194304)");
+	std::cerr << "Admin FreshBooks debugging: flush_mysql_variables___runtime_to_database completed";
 
 #ifdef DEBUG
 	if (GloVars.global.gdbg==false && GloVars.__cmd_proxysql_gdbg) {
@@ -3364,34 +3377,57 @@ bool ProxySQL_Admin::init() {
 	if (GloVars.__cmd_proxysql_reload || GloVars.__cmd_proxysql_initial || admindb_file_exists==false) { // see #617
 		if (GloVars.configfile_open) {
 			if (GloVars.confFile->cfg) {
+				std::cerr << "Configfile already opened";
  				Read_MySQL_Servers_from_configfile();
+				std::cerr << "Admin FreshBooks debugging: Read_MySQL_Servers_from_configfile completed";
 				Read_Global_Variables_from_configfile("admin");
+				std::cerr << "Admin FreshBooks debugging: Read_Global_Variables_from_configfile(admin) completed";
 				Read_Global_Variables_from_configfile("mysql");
+				std::cerr << "Admin FreshBooks debugging: Read_Global_Variables_from_configfile(mysql) completed";
 				Read_MySQL_Users_from_configfile();
+				std::cerr << "Admin FreshBooks debugging: Read_MySQL_Users_from_configfile completed";
 				Read_MySQL_Query_Rules_from_configfile();
+				std::cerr << "Admin FreshBooks debugging: Read_MySQL_Query_Rules_from_configfile completed";
 				Read_Scheduler_from_configfile();
+				std::cerr << "Admin FreshBooks debugging: Read_Scheduler_from_configfile completed";
 				Read_ProxySQL_Servers_from_configfile();
+				std::cerr << "Admin FreshBooks debugging: Read_ProxySQL_Servers_from_configfile completed";
 				__insert_or_replace_disktable_select_maintable();
+				std::cerr << "Admin FreshBooks debugging: __insert_or_replace_disktable_select_maintable completed";
 			} else {
 				if (GloVars.confFile->OpenFile(GloVars.config_file)==true) {
+					std::cerr << "Configfile just opened";
  					Read_MySQL_Servers_from_configfile();
+					std::cerr << "Admin FreshBooks debugging: Read_MySQL_Servers_from_configfile completed";
 					Read_MySQL_Users_from_configfile();
+					std::cerr << "Admin FreshBooks debugging: Read_MySQL_Users_from_configfile completed";
 					Read_MySQL_Query_Rules_from_configfile();
+					std::cerr << "Admin FreshBooks debugging: Read_MySQL_Query_Rules_from_configfile completed";
 					Read_Global_Variables_from_configfile("admin");
+					std::cerr << "Admin FreshBooks debugging: Read_Global_Variables_from_configfile(admin) completed";
 					Read_Global_Variables_from_configfile("mysql");
+					std::cerr << "Admin FreshBooks debugging: Read_Global_Variables_from_configfile(mysql) completed";
 					Read_Scheduler_from_configfile();
+					std::cerr << "Admin FreshBooks debugging: Read_Scheduler_from_configfile completed";
 					Read_ProxySQL_Servers_from_configfile();
+					std::cerr << "Admin FreshBooks debugging: Read_ProxySQL_Servers_from_configfile completed";
 					__insert_or_replace_disktable_select_maintable();
+					std::cerr << "Admin FreshBooks debugging: __insert_or_replace_disktable_select_maintable completed";
 				}
 			}
 		}
 	}
 	flush_admin_variables___database_to_runtime(admindb,true);
 	flush_mysql_variables___database_to_runtime(admindb,true);
+	std::cerr << "Admin FreshBooks debugging: flushing admin and mysql variables completed";
+
 #ifdef PROXYSQLCLICKHOUSE
 	flush_clickhouse_variables___database_to_runtime(admindb,true);
+	std::cerr << "Admin FreshBooks debugging: flushing clickhouse variables completed";
+
 #endif /* PROXYSQLCLICKHOUSE */
 	flush_sqliteserver_variables___database_to_runtime(admindb,true);
+	std::cerr << "Admin FreshBooks debugging: flushing sqlite variables completed";
 
 	if (GloVars.__cmd_proxysql_admin_socket) {
 		set_variable((char *)"mysql_ifaces",GloVars.__cmd_proxysql_admin_socket);
@@ -3400,6 +3436,7 @@ bool ProxySQL_Admin::init() {
 	S_amll.update_ifaces(variables.mysql_ifaces, &S_amll.ifaces_mysql);
 	S_amll.update_ifaces(variables.telnet_admin_ifaces, &S_amll.ifaces_telnet_admin);
 	S_amll.update_ifaces(variables.telnet_stats_ifaces, &S_amll.ifaces_telnet_stats);
+	std::cerr << "Admin FreshBooks debugging: update ifaces completed";
 
 
 
@@ -3411,6 +3448,7 @@ bool ProxySQL_Admin::init() {
 	arg->callback_func=main_callback_func;
 	if (pthread_create(&admin_thr, &attr, admin_main_loop, (void *)arg) !=0 ) {
 		perror("Thread creation");
+		std::cerr << "Admin FreshBooks debugging: pthread_create failed";
 		exit(EXIT_FAILURE);
 	}
 	do { usleep(50); } while (__sync_fetch_and_sub(&load_main_,0)==0);
@@ -3539,6 +3577,7 @@ void ProxySQL_Admin::insert_into_tables_defs(std::vector<table_def_t *> *tables_
 	td->table_name=strdup(table_name);
 	td->table_def=strdup(table_def);
 	tables_defs->push_back(td);
+	std::cerr << "Admin FreshBooks debugging: insert_into_tables_defs" << table_name << "\n";
 };
 
 void ProxySQL_Admin::drop_tables_defs(std::vector<table_def_t *> *tables_defs) {
@@ -5376,6 +5415,7 @@ void ProxySQL_Admin::__attach_db(SQLite3DB *db1, SQLite3DB *db2, char *alias) {
 	sprintf(cmd,a,db2->get_url(), alias);
 	db1->execute(cmd);
 	free(cmd);
+	std::cerr << "Admin FreshBooks debugging: _attach_db" << alias << "\n";
 }
 
 

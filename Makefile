@@ -485,9 +485,9 @@ binaries/proxysql_${CURVER}-dbg-ubuntu16_amd64.deb:
 	docker rm ubuntu16_build || true
 	docker create --name ubuntu16_build renecannao/proxysql:build-ubuntu16 bash -c "while : ; do sleep 10 ; done"
 	docker start ubuntu16_build
-	docker exec ubuntu16_build bash -c "cd /opt; git clone -b v${CURVER} https://github.com/sysown/proxysql.git proxysql"
+	docker exec ubuntu16_build bash -c "cd /opt; git clone -b v${CURVER} https://github.com/freshbooks/proxysql.git proxysql"
 	sleep 2
-	docker exec ubuntu16_build bash -c "cd /opt/proxysql; ${MAKE} clean && ${MAKE} ${MAKEOPT} build_deps && ${MAKE} ${MAKEOPT} debug"
+	docker exec ubuntu16_build bash -c "cd /opt/proxysql; make clean && make ${MAKEOPT} build_deps && ${MAKE} ${MAKEOPT} debug"
 	sleep 2
 	docker cp docker/images/proxysql/ubuntu-16.04-build/proxysql.ctl ubuntu16_build:/opt/proxysql/
 	sleep 2

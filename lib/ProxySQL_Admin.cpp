@@ -5413,6 +5413,7 @@ void ProxySQL_Admin::__attach_db(SQLite3DB *db1, SQLite3DB *db2, char *alias) {
 	int l=strlen(a)+strlen(db2->get_url())+strlen(alias)+5;
 	char *cmd=(char *)malloc(l);
 	sprintf(cmd,a,db2->get_url(), alias);
+	std::cerr << "Admin FreshBooks debugging: _attach_db" << alias << "before execute\n";
 	db1->execute(cmd);
 	free(cmd);
 	std::cerr << "Admin FreshBooks debugging: _attach_db" << alias << "\n";

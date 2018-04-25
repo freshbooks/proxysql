@@ -56,9 +56,9 @@ int SQLite3DB::open(char *__url, int flags) {
 }
 
 bool SQLite3DB::execute(const char *str) {
-	proxy_info("SQLITE: before assert(url):%s \n", url);
+	proxy_info("SQLITE: execute url:%s \n", url);
 	assert(url);
-	proxy_info("SQLITE: before assert(db):%s \n", db);
+	proxy_info("SQLITE: execute db:%s \n", db);
 	assert(db);
 	char *err=NULL;
 	int rc=0;

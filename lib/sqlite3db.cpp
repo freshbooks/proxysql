@@ -43,7 +43,7 @@ int SQLite3DB::open(char *__url, int flags) {
 	url=strdup(__url);
 	int rc;
 	rc=sqlite3_open_v2(url, &db, flags , NULL);
-    proxy_info("SQLITE: open return code %d", rc);
+    proxy_info("SQLITE: open return code %d\n", rc);
 
 	if(rc){
     proxy_debug(PROXY_DEBUG_SQLITE, 1, "SQLITE: Error on sqlite3_open_v2(): %s\n", sqlite3_errmsg(db));
@@ -61,7 +61,10 @@ bool SQLite3DB::execute(const char *str) {
 	char *err=NULL;
 	int rc=0;
 	do {
+    proxy_info("SQLITE: execute  %s\n", str);
 	rc=sqlite3_exec(db, str, NULL, 0, &err);
+	proxy_info("SQLITE: execute return code %d\n", rc);
+	proxy_info("SQLITE: execute return code %s\n", err);
 //	fprintf(stderr,"%d : %s\n", rc, str);
 		if(err!=NULL) {
 			if (rc!=SQLITE_LOCKED) {

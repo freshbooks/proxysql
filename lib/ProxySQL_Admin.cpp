@@ -3561,13 +3561,18 @@ void ProxySQL_Admin::dump_mysql_collations() {
 
 void ProxySQL_Admin::check_and_build_standard_tables(SQLite3DB *db, std::vector<table_def_t *> *tables_defs) {
 //	int i;
+	proxy_info("ProxySQL_Admin: check_and_build_standard_tables starting ...");
 	table_def_t *td;
 	db->execute("PRAGMA foreign_keys = OFF");
 	for (std::vector<table_def_t *>::iterator it=tables_defs->begin(); it!=tables_defs->end(); ++it) {
 		td=*it;
+		proxy_info("ProxySQL_Admin: check_and_build_standard_tables for %s ...", td->table_name);
 		db->check_and_build_table(td->table_name, td->table_def);
+		proxy_info("ProxySQL_Admin: check_and_build_standard_tables for %s completed", td->table_name);
 	}
 	db->execute("PRAGMA foreign_keys = ON");
+	proxy_info("ProxySQL_Admin: check_and_build_standard_tables completed");
+
 };
 
 

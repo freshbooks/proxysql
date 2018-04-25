@@ -56,7 +56,9 @@ int SQLite3DB::open(char *__url, int flags) {
 }
 
 bool SQLite3DB::execute(const char *str) {
+	proxy_info("SQLITE: before assert(url):%s \n", url);
 	assert(url);
+	proxy_info("SQLITE: before assert(db):%s \n", db);
 	assert(db);
 	char *err=NULL;
 	int rc=0;
@@ -202,20 +204,20 @@ int SQLite3DB::check_table_structure(char *table_name, char *table_def) {
 	  proxy_info("SQLITE: Error on sqlite3_prepare_v2() running query \"%s\" : %s\n", buff, sqlite3_errmsg(db));
 
 	  sqlite3_finalize(statement);
-	  proxy_info("SQLITE: sqlite3_finalize when not SQLITE_OK completed");
+	  proxy_info("SQLITE: sqlite3_finalize when not SQLITE_OK completed\n");
 	  free(buff);
 	  assert(0);
 	}
 	int result=0;
 	while ((result=sqlite3_step(statement))==SQLITE_ROW) {
-	  proxy_info("SQLITE: sqlite3_step completed");
+	  proxy_info("SQLITE: sqlite3_step completed\n");
 	  count+=sqlite3_column_int(statement,0);
 	}
 	sqlite3_finalize(statement);
-  	proxy_info("SQLITE: sqlite3_finalize completed");
+  	proxy_info("SQLITE: sqlite3_finalize completed\n");
 	free(buff);
 
-	proxy_info("SQLITE: done check_table_structure");
+	proxy_info("SQLITE: done check_table_structure\n");
 	return count;
 }
 
@@ -241,7 +243,7 @@ bool SQLite3DB::build_table(char *table_name, char *table_def, bool dropit) {
 	proxy_info("SQLITE: before execute\n");
 	rc=execute(table_def);
 
-	proxy_info("SQLITE: done build_table");
+	proxy_info("SQLITE: done build_table\n");
 	return rc;
 }
 

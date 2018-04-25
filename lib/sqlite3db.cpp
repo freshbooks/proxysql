@@ -64,7 +64,7 @@ bool SQLite3DB::execute(const char *str) {
     proxy_info("SQLITE: execute  %s\n", str);
 	rc=sqlite3_exec(db, str, NULL, 0, &err);
 	proxy_info("SQLITE: execute return code %d\n", rc);
-	proxy_info("SQLITE: execute return code %s\n", err);
+	proxy_info("SQLITE: execute error message %s\n", err);
 //	fprintf(stderr,"%d : %s\n", rc, str);
 		if(err!=NULL) {
 			if (rc!=SQLITE_LOCKED) {
@@ -188,39 +188,60 @@ int SQLite3DB::return_one_int(const char *str) {
 int SQLite3DB::check_table_structure(char *table_name, char *table_def) {
 	const char *q1="SELECT COUNT(*) FROM sqlite_master WHERE type=\"table\" AND name=\"%s\" AND sql=\"%s\"";
 	int count=0;
+    proxy_info("SQLITE: check_table_structure: %s\n", table_name);
+
 	int l=strlen(q1)+strlen(table_name)+strlen(table_def)+1;
 	sqlite3_stmt *statement;
 	char *buff=(char *)calloc(1,l);
+	proxy_info("SQLITE: Calloc successful\n");
 	sprintf(buff, q1, table_name , table_def);
+	proxy_info("SQLITE: buffer: %s\n", buff);
+
 	if(sqlite3_prepare_v2(db, buff, -1, &statement, 0) != SQLITE_OK) {
 	  proxy_debug(PROXY_DEBUG_SQLITE, 1, "SQLITE: Error on sqlite3_prepare_v2() running query \"%s\" : %s\n", buff, sqlite3_errmsg(db));
+	  proxy_info("SQLITE: Error on sqlite3_prepare_v2() running query \"%s\" : %s\n", buff, sqlite3_errmsg(db));
+
 	  sqlite3_finalize(statement);
+	  proxy_info("SQLITE: sqlite3_finalize when not SQLITE_OK completed");
 	  free(buff);
 	  assert(0);
 	}
 	int result=0;
 	while ((result=sqlite3_step(statement))==SQLITE_ROW) {
+	  proxy_info("SQLITE: sqlite3_step completed");
 	  count+=sqlite3_column_int(statement,0);
 	}
 	sqlite3_finalize(statement);
+  	proxy_info("SQLITE: sqlite3_finalize completed");
 	free(buff);
+
+	proxy_info("SQLITE: done check_table_structure");
 	return count;
 }
 
 bool SQLite3DB::build_table(char *table_name, char *table_def, bool dropit) {
 	bool rc;
+
+    proxy_info("SQLITE: build_table: %s\n", table_name);
+
 	if (dropit) {
 		const char *q2="DROP TABLE IF EXISTS %s";
 		int l=strlen(q2)+strlen(table_name)+1;
 		char *buff=(char *)calloc(1,l);
+		proxy_info("SQLITE: Calloc successful\n");
 		sprintf(buff,q2,table_name);
+		proxy_info("SQLITE: buffer: %s\n", buff);
 		proxy_debug(PROXY_DEBUG_SQLITE, 5, "SQLITE: dropping table: %s\n", buff);
+		proxy_info("SQLITE: before execute\n");
 		rc=execute(buff);
 		free(buff);
 		if (rc==false) return rc;
 	}
 	proxy_debug(PROXY_DEBUG_SQLITE, 5, "SQLITE: creating table: %s\n", table_def);
+	proxy_info("SQLITE: before execute\n");
 	rc=execute(table_def);
+
+	proxy_info("SQLITE: done build_table");
 	return rc;
 }
 
